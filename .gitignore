@@ -1,0 +1,5 @@
+*.ipynb
+*.xlsx
+*.json
+*.bin
+.env

@@ -1,0 +1,19 @@
+chatbot:
+  llm_model: 'gpt-4-turbo'
+  llm_temp: 0.7 # llm temperature
+  llm_max_out: 2048 # 최대 아웃풋 토큰
+
+extractor:
+  llm_model: 'gpt-3.5-turbo-0125'
+  llm_temp: 0
+  llm_max_out: 256
+
+price:
+  'gpt-3.5-turbo-0125': # 16K context window
+    input: 0.0005 # $ per 1K tokens
+    output: 0.0015 # $ per 1K tokens
+
+mongo:
+  db_name: 'lawra_db' # mongodb database name
+  case_col: 'cases' # mongodb case-collection
+  qa_col: 'qa_log' # mongodb qa_log collection

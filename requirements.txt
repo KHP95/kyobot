@@ -1,0 +1,9 @@
+# langchain 설치시 uvicorn과 fastapi 자동포함
+langchain==0.1.8
+openai==1.12.0
+tiktoken==0.6.0
+python-dotenv==1.0.1
+pymongo==4.6.2
+scikit-learn==1.4.2
+pandas==2.2.0
+numpy==1.26.4
