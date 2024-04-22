@@ -1,0 +1,5 @@
+.git
+.gitignore
+*.xlsx
+*.ipynb
+*.csv

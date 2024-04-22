@@ -42,5 +42,5 @@ async def query_respond(query: ChatInput):
     return {'ans':output_text}
 
 # 정적 파일 마운트 (나중에 해야 엔드포인트 충돌 x)
-# app.mount("/", StaticFiles(directory="dist", html=True), name="dist")
+app.mount("/", StaticFiles(directory="dist", html=True), name="dist")
 
