@@ -30,12 +30,6 @@ except ImportError:
     pass
 
 
-
-"""
-보험추천을 위한 파이프라인과 키워드추출 모델을 정의하는 모듈
-모듈이 아닌 스크립트로 실행시 Mock_data.csv에서 데이터 받아와서 학습 후 파이프라인 저장
-"""
-
 load_dotenv()
 FILE_PATH = os.path.dirname(os.path.abspath(__file__))
 PIPELINE_PATH = os.path.join(FILE_PATH, 'recommend_pipeline.joblib')
@@ -57,39 +51,6 @@ CATEGORIES ={
 CATEGORY_NAMES = ['연령대', '성별', '질병이력', '음주유무/량', '흡연유무/량', '결혼유무']
 DEFAULT_KEYWORDS = [-1, '모름', '모름', '모름', '모름', '모름']
 """
-
-
-class EstimatorPreProcesseor(TransformerMixin, BaseEstimator):
-    """
-    sklearn의 pipeline에 커스텀 전처리기를 bind하는 클래스\n
-    feature의 각 범주를 미리 지정해놓고 범주외의 데이터가 들어오거나, 데이터타입이 다르면 기본값으로 변환\n
-    [[연령대, 성별, 질병이력, 음주유무, 흡연유무, 결혼여부]] 순서로 데이터 입력\n
-    반드시 2중첩 리스트 혹은 판다스 데이터프레임, 시리즈로 입력\n
-    """
-
-    def __init__(self):
-        pass
-
-    def fit(self, X, y=None):
-        return self
-    
-    def transform(self, X:List[list], y=None):
-        if isinstance(X, pd.DataFrame):
-            X = X.values.tolist()
-        elif isinstance(X, pd.Series):
-            X = [X.values.tolist()]
-        elif not isinstance(X[0], list):
-            X = [X]
-
-        for i in range(len(X)):
-            for j in range(len(CATEGORIES)):
-                # 카테고리 라벨에 없으면 정수형은 -1로, string은 '모름'으로 변경
-                if X[i][j] not in CATEGORIES[j]:
-                    X[i][j] = -1 if isinstance(X[i][j], int) else '모름'
-        return X
-
-    def fit_transform(self, X, y=None):
-        return self.fit(X, y).transform(X)
 
 
 class KeywordExtractor():
@@ -134,7 +95,27 @@ class InsuranceEstimator():
         self.pipeline:Pipeline = joblib.load(PIPELINE_PATH)
         self.extractor:KeywordExtractor = KeywordExtractor()
 
-    async def predict(self, query:str) -> Tuple[str, dict]:
+    def validate_data(self, X:List[list]):
+        """
+        입력 데이터를 검증하는 함수\n
+        카테고리 라벨에 없으면 정수형은 -1로, string은 '모름'으로 변경\n
+        오류 발생시 기본
+
+        inputs:
+            X: 입력데이터 ['연령대', '성별', '질병이력', '음주유무/량', '흡연유무/량', '결혼여부', '추천보험']
+        returns:
+            X: 검증데이터 ['연령대', '성별', '질병이력', '음주유무/량', '흡연유무/량', '결혼여부', '추천보험']
+        """
+        try:
+            for j in range(len(CATEGORIES)):
+                # 카테고리 라벨에 없으면 정수형은 -1로, string은 '모름'으로 변경
+                if X[j] not in CATEGORIES[j]:
+                    X[j] = -1 if isinstance(X[i][j], int) else '모름'
+        except:
+            X = DEFAULT_KEYWORDS
+        return X
+
+    async def invoke(self, query:str) -> Tuple[str, dict]:
         """
         입력 문장에서 키워드를 추출한뒤 추천보험과 키워드 딕셔너리를 반환하는 함수\n
         단일 문장과 단일 보험을 반환\n
@@ -146,14 +127,18 @@ class InsuranceEstimator():
             ans: 추천보험
             keyword_dict: 추출된 키워드(딕셔너리)
         """
+        # 키워드 추출 및 데이터 검증
         keywords:list = await self.extractor.invoke(query)
+        keywords = self.validate_data(keywords)
+
+        # 보험추천 및 키워드 정리
         ans:str = self.pipeline.predict([keywords]).tolist()[0]
         keyword_dict = {CATEGORY_NAMES[i]:value for i, value in enumerate(keywords)}
         return ans, keyword_dict
 
-    async def invoke(self, query:str) -> str:
+    async def predict(self, query:str) -> str:
         """
-        predict와 같은기능을 하는 함수
+        invoke와 같은기능을 하는 함수
         """
         return await self.predict(query)
 
@@ -223,7 +208,6 @@ if __name__ == '__main__':
 
     # 파이프라인 구성
     pipeline = Pipeline([
-        ('preprocessor', EstimatorPreProcesseor()),
         ('columntransforemr', ct),
         ('estimator', estimator)
     ])

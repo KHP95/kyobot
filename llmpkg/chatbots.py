@@ -22,10 +22,10 @@ from langchain_core.output_parsers import StrOutputParser
 # local lib
 try:
     from .llm_prompts import basic_chatbot_prompt
-    from .recommendation import InsuranceEstimator, EstimatorPreProcesseor
+    from .recommendation import InsuranceEstimator
 except ImportError:
     from llmpkg.llm_prompts import basic_chatbot_prompt
-    from llmpkg.recommendation import InsuranceEstimator, EstimatorPreProcesseor
+    from llmpkg.recommendation import InsuranceEstimator
 
 
 # API key 불러오기
@@ -159,7 +159,7 @@ class ChatBot:
 
         # 마케팅 문구생성 체인
         output_text = await self.chain.ainvoke(input_dict)
-        output_text = f"키워드:\n{keyword_string}\n추천보험 : {ins_name}\n생성된 마케팅문구:\n" + output_text
+        output_text = f"###키워드###\n{keyword_string}\n###추천보험###\n{ins_name}\n\n###생성된 마케팅문구###\n" + output_text
         return output_text
         
         
